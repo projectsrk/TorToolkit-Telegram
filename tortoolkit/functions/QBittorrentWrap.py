@@ -66,6 +66,7 @@ async def add_torrent_magnet(magnet,message):
         ext_hash = Hash_Fetch.get_hash_magnet(magnet)
         ext_res = client.torrents_info(torrent_hashes=ext_hash)
         if len(ext_res) > 0:
+            torlog.info(f"This torrent is in list {ext_res} {magnet} {ext_hash}")
             await message.edit("This torrent is alreaded in the leech list.")
             return False
         # hot fix for the below issue
@@ -88,14 +89,20 @@ async def add_torrent_magnet(magnet,message):
             while True:
                 if (datetime.now() - st).seconds >= 10:
                     torlog.warning("The provided torrent was not added and it was timed out. magnet was:- {}".format(magnet))
+                    torlog.error(ext_hash)
                     await message.edit("The torrent was not added due to an error.")
                     return False
-                ctor_new = client.torrents_info()
-                if len(ctor_new) > ctor:
-                    # https://t.me/c/1439207386/2977 below line is for this
-                    torlog.info(ctor_new)
-                    torlog.info(magnet)
-                    return ctor_new[0]
+                # commenting in favour of wrong torrent getting returned
+                # ctor_new = client.torrents_info()
+                #if len(ctor_new) > ctor:
+                #    # https://t.me/c/1439207386/2977 below line is for this
+                #    torlog.info(ctor_new)
+                #    torlog.info(magnet)
+                #    return ctor_new[0]
+                ext_res = client.torrents_info(torrent_hashes=ext_hash)
+                if len(ext_res) > 0:
+                    torlog.info("Got torrent info from ext hash.")
+                    return ext_res[0]
 
         else:
             await message.edit("This is an unsupported/invalid link.")
@@ -121,6 +128,7 @@ async def add_torrent_file(path,message):
         ext_hash = Hash_Fetch.get_hash_file(path)
         ext_res = client.torrents_info(torrent_hashes=ext_hash)
         if len(ext_res) > 0:
+            torlog.info(f"This torrent is in list {ext_res} {path} {ext_hash}")
             await message.edit("This torrent is alreaded in the leech list.")
             return False
         
@@ -146,11 +154,16 @@ async def add_torrent_file(path,message):
             while True:
                 if (datetime.now() - st).seconds >= 20:
                     torlog.warning("The provided torrent was not added and it was timed out. file path was:- {}".format(path))
+                    torlog.error(ext_hash)
                     await message.edit("The torrent was not added due to an error.")
                     return False
-                ctor_new = client.torrents_info()
-                if len(ctor_new) > ctor:
-                    return ctor_new[0]
+                #ctor_new = client.torrents_info()
+                #if len(ctor_new) > ctor:
+                #    return ctor_new[0]
+                ext_res = client.torrents_info(torrent_hashes=ext_hash)
+                if len(ext_res) > 0:
+                    torlog.info("Got torrent info from ext hash.")
+                    return ext_res[0]
 
         else:
             await message.edit("This is an unsupported/invalid link.")
@@ -344,8 +357,8 @@ def progress_bar(percentage):
     """Returns a progress bar for download
     """
     #percentage is on the scale of 0-1
-    comp = "▰"
-    ncomp = "▱"
+    comp = get_val("COMPLETED_STR")
+    ncomp = get_val("REMAINING_STR")
     pr = ""
 
     for i in range(1,11):
@@ -370,9 +383,12 @@ async def register_torrent(entity,message,user_msg=None,magnet=False,file=False)
         omess = user_msg
 
     if magnet:
-        torlog.info(magnet)
+        torlog.info(f"magnet :- {magnet}")
         torrent = await add_torrent_magnet(entity,message)
-        if torrent.progress == 1:
+        if isinstance(torrent,bool):
+            return False
+        torlog.info(torrent)
+        if torrent.progress == 1 and torrent.completion_on > 1:
             await message.edit("The provided torrent was already completly downloaded.")
             return True
         else:
