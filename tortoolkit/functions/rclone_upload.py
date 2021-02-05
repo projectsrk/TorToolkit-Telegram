@@ -84,7 +84,7 @@ async def rclone_upload(path,message,user_msg,dest_drive,dest_base,edit_time,con
             )
 
 
-        txtmsg = "<a href='tg://user?id={}'>Done</a>\n#uploads\nUPLOADED FOLDER :-<code>{}</code>\nTo Drive.".format(omsg.sender_id,os.path.basename(path))
+        txtmsg = "<b>👤 User: </b><a href='tg://user?id={}'>Click here</a>\n🏷Fɪʟᴇɴᴀᴍᴇ :-<code>{}</code>\n\n<b>Fɪʟᴇ Is Mɪʀʀᴏʀᴇᴅ & #Uᴘʟᴏᴀᴅᴇᴅ @MirrorCrew</b>".format(omsg.sender_id,os.path.basename(path))
         
         await omsg.reply(txtmsg,buttons=buttons,parse_mode="html")
         await msg.delete()
@@ -130,7 +130,7 @@ async def rclone_upload(path,message,user_msg,dest_drive,dest_base,edit_time,con
                 [KeyboardButtonUrl("Index URL",index_link)]
             )
 
-        txtmsg = "<a href='tg://user?id={}'>Done</a>\n#uploads\nUPLOADED FILE :-<code>{}</code>\nTo Drive.".format(omsg.sender_id,os.path.basename(path))
+        txtmsg = "<b>👤 User: </b><a href='tg://user?id={}'>Click here</a>\n🏷Fɪʟᴇɴᴀᴍᴇ :-<code>{}</code>\n\n<b>Fɪʟᴇ Is Mɪʀʀᴏʀᴇᴅ & #Uᴘʟᴏᴀᴅᴇᴅ @MirrorCrew</b>".format(omsg.sender_id,os.path.basename(path))
 
         
         await omsg.reply(txtmsg,buttons=buttons,parse_mode="html")
