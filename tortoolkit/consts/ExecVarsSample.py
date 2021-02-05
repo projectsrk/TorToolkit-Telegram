@@ -5,7 +5,7 @@ except:
     class ExecVars:
         # TODO optimize for vps use fully - currently only heroku is focused
         # Set true if its VPS [currently not fully working]
-        IS_VPS = False
+        IS_VPS = True
         API_HASH = os.environ.get("API_HASH")
         API_ID = int(os.environ.get("APP_ID", 12345))
         BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
