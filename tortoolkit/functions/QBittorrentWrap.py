@@ -66,7 +66,6 @@ async def add_torrent_magnet(magnet,message):
         ext_hash = Hash_Fetch.get_hash_magnet(magnet)
         ext_res = client.torrents_info(torrent_hashes=ext_hash)
         if len(ext_res) > 0:
-            torlog.info(f"This torrent is in list {ext_res} {magnet} {ext_hash}")
             await message.edit("This torrent is alreaded in the leech list.")
             return False
         # hot fix for the below issue
@@ -89,20 +88,14 @@ async def add_torrent_magnet(magnet,message):
             while True:
                 if (datetime.now() - st).seconds >= 10:
                     torlog.warning("The provided torrent was not added and it was timed out. magnet was:- {}".format(magnet))
-                    torlog.error(ext_hash)
                     await message.edit("The torrent was not added due to an error.")
                     return False
-                # commenting in favour of wrong torrent getting returned
-                # ctor_new = client.torrents_info()
-                #if len(ctor_new) > ctor:
-                #    # https://t.me/c/1439207386/2977 below line is for this
-                #    torlog.info(ctor_new)
-                #    torlog.info(magnet)
-                #    return ctor_new[0]
-                ext_res = client.torrents_info(torrent_hashes=ext_hash)
-                if len(ext_res) > 0:
-                    torlog.info("Got torrent info from ext hash.")
-                    return ext_res[0]
+                ctor_new = client.torrents_info()
+                if len(ctor_new) > ctor:
+                    # https://t.me/c/1439207386/2977 below line is for this
+                    torlog.info(ctor_new)
+                    torlog.info(magnet)
+                    return ctor_new[0]
 
         else:
             await message.edit("This is an unsupported/invalid link.")
@@ -128,7 +121,6 @@ async def add_torrent_file(path,message):
         ext_hash = Hash_Fetch.get_hash_file(path)
         ext_res = client.torrents_info(torrent_hashes=ext_hash)
         if len(ext_res) > 0:
-            torlog.info(f"This torrent is in list {ext_res} {path} {ext_hash}")
             await message.edit("This torrent is alreaded in the leech list.")
             return False
         
@@ -154,16 +146,11 @@ async def add_torrent_file(path,message):
             while True:
                 if (datetime.now() - st).seconds >= 20:
                     torlog.warning("The provided torrent was not added and it was timed out. file path was:- {}".format(path))
-                    torlog.error(ext_hash)
                     await message.edit("The torrent was not added due to an error.")
                     return False
-                #ctor_new = client.torrents_info()
-                #if len(ctor_new) > ctor:
-                #    return ctor_new[0]
-                ext_res = client.torrents_info(torrent_hashes=ext_hash)
-                if len(ext_res) > 0:
-                    torlog.info("Got torrent info from ext hash.")
-                    return ext_res[0]
+                ctor_new = client.torrents_info()
+                if len(ctor_new) > ctor:
+                    return ctor_new[0]
 
         else:
             await message.edit("This is an unsupported/invalid link.")
@@ -197,10 +184,10 @@ async def update_progress(client,message,torrent,except_retry=0,sleepsec=None):
             client.torrents_delete(torrent_hashes=tor_info.hash,delete_files=True)
             return True
         try:
-            msg = "<b>Downloading:</b> <code>{}</code>\n".format(
+            msg = "<b>🗂Filename:</b> <code>{}</code>\n".format(
                 tor_info.name
                 )
-            msg += "<b>Down:</b> {} <b>Up:</b> {}\n".format(
+            msg += "<b>DL📥:</b> {} <b>Up📤:</b> {}\n".format(
                 human_readable_bytes(tor_info.dlspeed,postfix="/s"),
                 human_readable_bytes(tor_info.upspeed,postfix="/s")
                 )
@@ -212,13 +199,13 @@ async def update_progress(client,message,torrent,except_retry=0,sleepsec=None):
                 human_readable_bytes(tor_info.downloaded),
                 human_readable_bytes(tor_info.total_size)
                 )
-            msg += "<b>ETA:</b> <b>{} Mins</b>\n".format(
+            msg += "<b>ETA:</b> <b>{}</b>\n".format(
                 human_readable_timedelta(tor_info.eta)
                 )
-            msg += "<b>S:</b>{} <b>L:</b>{}\n".format(
+            msg += "<b>Seeders:</b>{} <b>Peers:</b>{}\n".format(
                 tor_info.num_seeds,tor_info.num_leechs
                 )
-            msg += "<b>Using engine:</b> <code>qBittorrent</code>"
+            msg += "\n━━━━━━━━━━━━━━━━━━━\nJoin @MirrorCrew | @Stevenbin"
             
             #error condition
             try:
@@ -252,7 +239,7 @@ async def update_progress(client,message,torrent,except_retry=0,sleepsec=None):
                         await message.edit("Download path location failed", buttons=None)
                         return None
 
-                    await message.edit("Download completed ```{}```. To path ```{}```".format(tor_info.name,tor_info.save_path),buttons=None)
+                    await message.edit("```Filename: 🗂{}```\nStatus: Download Completed".format(tor_info.name),buttons=None)
                     return [savepath, tor_info.hash]
                 else:
                     #return await update_progress(client,message,torrent)
@@ -357,8 +344,8 @@ def progress_bar(percentage):
     """Returns a progress bar for download
     """
     #percentage is on the scale of 0-1
-    comp = get_val("COMPLETED_STR")
-    ncomp = get_val("REMAINING_STR")
+    comp = "▓"
+    ncomp = "░"
     pr = ""
 
     for i in range(1,11):
@@ -383,12 +370,9 @@ async def register_torrent(entity,message,user_msg=None,magnet=False,file=False)
         omess = user_msg
 
     if magnet:
-        torlog.info(f"magnet :- {magnet}")
+        torlog.info(magnet)
         torrent = await add_torrent_magnet(entity,message)
-        if isinstance(torrent,bool):
-            return False
-        torlog.info(torrent)
-        if torrent.progress == 1 and torrent.completion_on > 1:
+        if torrent.progress == 1:
             await message.edit("The provided torrent was already completly downloaded.")
             return True
         else:
@@ -406,17 +390,17 @@ async def register_torrent(entity,message,user_msg=None,magnet=False,file=False)
 
             message = await message.edit("Download will be automatically started after 180s of no action.",buttons=[
                 [
-                    KeyboardButtonUrl("Choose File from link",urll),
-                    KeyboardButtonCallback("Get Pincode",data=pincodetxt.encode("UTF-8"))
+                    KeyboardButtonUrl("Select files📁",urll),
+                    KeyboardButtonCallback("💠Generate Code💠",data=pincodetxt.encode("UTF-8"))
                 ],
                 [
-                    KeyboardButtonCallback("Done Selecting Files.",data=f"doneselection {omess.sender_id} {omess.id}".encode("UTF-8"))
+                    KeyboardButtonCallback("Start 🚀",data=f"doneselection {omess.sender_id} {omess.id}".encode("UTF-8"))
                 ]
             ])
 
             await get_confirm(omess)
 
-            message = await message.edit(buttons=[KeyboardButtonCallback("Cancel Leech",data=data.encode("UTF-8"))])
+            message = await message.edit(buttons=[KeyboardButtonCallback("⚠️ Cancel",data=data.encode("UTF-8"))])
 
             db.disable_torrent(torrent.hash)
             
@@ -443,17 +427,17 @@ async def register_torrent(entity,message,user_msg=None,magnet=False,file=False)
 
             message = await message.edit(buttons=[
                 [
-                    KeyboardButtonUrl("Choose File from link",urll),
+                    KeyboardButtonUrl("Select files📁",urll),
                     KeyboardButtonCallback("Get Pincode",data=pincodetxt.encode("UTF-8"))
                 ],
                 [
-                    KeyboardButtonCallback("Done Selecting Files.",data=f"doneselection {omess.sender_id} {omess.id}".encode("UTF-8"))
+                    KeyboardButtonCallback("Start 🚀",data=f"doneselection {omess.sender_id} {omess.id}".encode("UTF-8"))
                 ]
             ])
 
             await get_confirm(omess)
 
-            message = await message.edit(buttons=[KeyboardButtonCallback("Cancel Leech",data=data.encode("UTF-8"))])
+            message = await message.edit(buttons=[KeyboardButtonCallback("⚠️ Cancel",data=data.encode("UTF-8"))])
 
             db.disable_torrent(torrent.hash)
             
